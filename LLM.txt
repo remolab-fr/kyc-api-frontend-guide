@@ -1,0 +1,660 @@
+LLM CODER AGENT IMPLEMENTATION CONTRACT
+KYC API FRONTEND INTEGRATION
+
+Status: public-safe implementation manifest
+Audience: autonomous coding agents implementing a frontend web application
+Primary goal: build a production-quality frontend integration on top of the KYC API without requiring backend repository access or internal implementation knowledge.
+
+IMPORTANT: This file is intentionally plain text. Treat it as an agent-readable implementation contract, not as a LaTeX document.
+
+1. MISSION
+
+You are an autonomous senior frontend engineering agent.
+
+Your task is to implement a browser or web-application integration with the KYC API. The resulting application should let a regulated organization build onboarding, due diligence, case review, customer refresh, or compliance operations workflows on top of the API.
+
+Do not build a marketing page. Build the usable product surface:
+
+- API diagnostics.
+- Browser-safe authentication integration.
+- Typed API client.
+- Quick screening search.
+- Durable case workspace.
+- Case section editing.
+- Report snapshot generation and reading.
+- Workflow event monitor.
+- Human review decision panel.
+- Error handling and support handoff.
+
+The frontend orchestrates the user experience. The API owns the regulated workflow contract.
+
+2. OPERATING MODE
+
+Work autonomously.
+
+Inspect the target frontend repository before changing code. Reuse its existing framework, router, data-fetching library, UI primitives, form conventions, auth wrapper, linting setup, test runner, and environment variable conventions.
+
+Do not introduce a new framework or design system unless the repository has no workable existing pattern.
+
+Implement end to end:
+
+1. Read existing project structure.
+2. Identify the correct frontend boundary for API integration.
+3. Add typed API client and domain types.
+4. Add routes/screens/components.
+5. Add error states and loading states.
+6. Add tests where the repository supports them.
+7. Run formatting, type checks, linting, tests, and build commands.
+8. Report what changed and what validation passed.
+
+3. SECURITY RULES
+
+The browser must never contain:
+
+- Service-account keys.
+- Private keys.
+- Backend secrets.
+- Database URLs.
+- Token-introspection credentials.
+- Long-lived bearer credentials.
+- Provider credentials.
+- Raw internal infrastructure values.
+
+The browser may contain:
+
+- Public API base URL.
+- Public auth issuer URL.
+- Public frontend auth client ID.
+- Redirect URI.
+- Post-logout redirect URI.
+- Required API audience or scope when provided by the API owner.
+
+Protected API calls must send:
+
+Authorization: Bearer <access_token>
+
+The access token must come from the current user's approved browser sign-in flow, normally authorization code with PKCE or a repository-provided equivalent.
+
+Do not log:
+
+- Access tokens.
+- Full identity documents.
+- Raw regulated payloads.
+- Private customer data.
+- Compliance-only notes.
+- Secrets.
+
+When an API error includes request_id, preserve it in support/debug UI. Do not replace it with client-only correlation text.
+
+4. REQUIRED CONFIGURATION INPUTS
+
+Before final production wiring, the application must support these environment-specific values:
+
+KYC_API_BASE_URL
+AUTH_ISSUER_URL
+AUTH_CLIENT_ID
+AUTH_REDIRECT_URI
+AUTH_POST_LOGOUT_REDIRECT_URI
+AUTH_AUDIENCE_SCOPE
+FRONTEND_ORIGIN
+
+Use the host application's environment naming convention. For Vite-style apps, acceptable public names are:
+
+VITE_KYC_API_BASE_URL
+VITE_AUTH_ISSUER
+VITE_AUTH_CLIENT_ID
+VITE_AUTH_REDIRECT_URI
+VITE_AUTH_POST_LOGOUT_REDIRECT_URI
+VITE_AUTH_AUDIENCE_SCOPE
+
+Do not hardcode deployment-specific production values in reusable source code unless the repository already hardcodes public runtime defaults by convention.
+
+5. PUBLIC API CONCEPTS
+
+Implement the frontend around these public concepts:
+
+Authenticated API access:
+The user signs in. The frontend gets a short-lived access token. The API client sends that token on protected requests.
+
+Screening evidence:
+The API returns screening status, evidence-search status, limitations, and next steps. Present this as evidence, not as a final approval.
+
+Case workspace:
+A durable case groups identity details, sections, review activity, and report snapshots.
+
+Report snapshot:
+A generated report artifact with a stable snapshot identifier, hash, view type, generated timestamp, and payload.
+
+Workflow event:
+A progress event for active work. Useful for UI feedback. Not the permanent compliance archive.
+
+Human review:
+The accountable reviewer records the regulated decision. Automated recommendations must remain visibly separate from final decisions.
+
+6. ROUTE AND FEATURE PLAN
+
+Implement these product surfaces unless the target repository already has equivalent screens:
+
+Diagnostics:
+- Show public API health.
+- Show readiness.
+- Show whether the user is authenticated.
+- Optionally verify that one protected endpoint works after login.
+
+Quick screening:
+- Inputs: name, optional date of birth, optional nationality, evidence-search toggle, result limit.
+- Output: subject, generated timestamp, overall status, risk level, screening status, evidence-search status, limitations, next steps.
+- Never render quick screening as final approval.
+
+Case workspace:
+- Create durable case.
+- Load case detail when a case ID exists.
+- Show server-owned fields as read-only.
+- Handle duplicate external case IDs as conflict states.
+
+Section editor:
+- Save one case section at a time.
+- Use role-aware UI for restricted sections.
+- Treat backend authorization as enforcement and frontend gating as usability.
+
+Report viewer:
+- Generate report snapshots.
+- Read latest report.
+- Support report views:
+  - user_safe
+  - provider_export
+  - compliance
+- Show customer-safe view in customer-facing routes.
+- Restrict compliance view to authorized internal users.
+
+Workflow monitor:
+- Poll events while work is active.
+- Store next_after_id.
+- Merge events by ID.
+- Slow or stop polling when the tab is hidden.
+- Show warnings and errors clearly.
+
+Review decision:
+- Show evidence.
+- Show recommendation/proposal separately.
+- Require explicit human decision.
+- Require rationale text.
+- Submit approved, rejected, needs_more_information, or escalated outcome.
+
+7. ENDPOINT CONTRACTS
+
+Public operational endpoints:
+
+GET /healthz
+GET /readyz
+
+Protected business endpoints:
+
+GET /api/v1/kyc/search
+POST /api/v1/kyc-cases
+GET /api/v1/kyc-cases/{case_id}
+PATCH /api/v1/kyc-cases/{case_id}/sections/{section_name}
+POST /api/v1/kyc-cases/{case_id}/reports/end-user-v1
+GET /api/v1/kyc-cases/{case_id}/reports/latest?view={view}
+GET /api/v1/workflow/events?after_id={after_id}&limit={limit}
+POST /api/v1/kyc-cases/{case_id}/review-decisions
+
+Optional protected endpoints if the product needs them:
+
+GET /api/v1/kyc-cases/{case_id}/reports/{snapshot_id}
+GET /api/v1/kyc-cases/{case_id}/audit-trail
+GET /api/v1/kyc-cases/{case_id}/operation-runs?status={status}
+POST /api/v1/kyc-cases/{case_id}/decision-proposals
+POST /api/v1/kyc-cases/{case_id}/information-request-drafts
+POST /api/v1/information-request-drafts/{draft_id}/approvals
+POST /api/v1/information-request-drafts/{draft_id}/send
+GET /api/v1/kyc-report-schemas/end-user-kyc-report/v1.0.0
+GET /api/v1/kyc-report-schemas/end-user-kyc-report/v1.0.0/allowed-values
+
+Do not expose operator-only or machine-to-machine surfaces to ordinary end users.
+
+8. TYPESCRIPT API CLIENT
+
+Create or adapt a small API client. Keep it independent from UI components.
+
+Required behavior:
+
+- Accept baseUrl.
+- Accept getAccessToken.
+- Support GET, POST, PATCH.
+- Attach Accept: application/json.
+- Attach Content-Type: application/json when a body is present.
+- Attach Authorization only when a token exists.
+- Parse text response before JSON parsing.
+- Throw a typed KycApiError on non-2xx responses.
+
+Reference shape:
+
+```ts
+export type KycApiClientOptions = {
+  baseUrl: string;
+  getAccessToken: () => Promise<string | null>;
+};
+
+export type KycApiErrorBody = {
+  code: string;
+  message: string;
+  developer_message?: string;
+  category?: string;
+  http_status?: number;
+  request_id?: string;
+  trace_id?: string;
+  retryable?: boolean;
+  docs_url?: string;
+  details?: Record<string, unknown>;
+};
+
+export class KycApiError extends Error {
+  readonly developerMessage?: string;
+  readonly category?: string;
+  readonly requestId?: string;
+  readonly traceId?: string;
+  readonly retryable: boolean;
+  readonly details?: Record<string, unknown>;
+
+  constructor(
+    message: string,
+    readonly status: number,
+    readonly code?: string,
+    readonly responseBody?: unknown
+  ) {
+    super(message);
+    const body = (responseBody as { error?: KycApiErrorBody } | null)?.error;
+    this.developerMessage = body?.developer_message;
+    this.category = body?.category;
+    this.requestId = body?.request_id;
+    this.traceId = body?.trace_id;
+    this.retryable = body?.retryable ?? false;
+    this.details = body?.details;
+  }
+
+  get field(): string | undefined {
+    return typeof this.details?.field === "string" ? this.details.field : undefined;
+  }
+}
+```
+
+9. ERROR HANDLING CONTRACT
+
+Handle API errors as product states:
+
+400:
+Show field or form validation. Use error.details.field when present.
+
+401:
+Refresh login, clear stale auth state, or redirect to sign in.
+
+404:
+Show missing resource state and route back to a safe page.
+
+409:
+Treat as a recoverable conflict. For duplicate external case IDs, offer to load existing case or generate a new ID.
+
+503:
+Show degraded service or retry-later state. Include request_id in support details.
+
+Always preserve:
+
+- status
+- code
+- message
+- developer_message
+- category
+- request_id
+- trace_id
+- retryable
+- details
+
+10. QUICK SCREENING CONTRACT
+
+Request:
+
+GET /api/v1/kyc/search?name={name}&date_of_birth={date_of_birth}&nationality={nationality}&include_web_search={true_or_false}&limit={limit}
+
+Only name is required.
+
+Render:
+
+- subject.name
+- generated_at
+- overall_assessment.status
+- overall_assessment.risk_level
+- overall_assessment.summary
+- local_sanctions_screening.status
+- local_sanctions_screening.matches_count
+- local_sanctions_screening.source_versions
+- web_search_screening.status
+- web_search_screening.total_results
+- web_search_screening.queries
+- recommended_next_steps
+- limitations
+
+Do not treat quick screening as final approval. It is evidence.
+
+11. CASE CREATION CONTRACT
+
+Request:
+
+POST /api/v1/kyc-cases
+
+Minimal frontend input shape:
+
+```ts
+export type KycCaseCreateInput = {
+  kyc_case_id?: string | null;
+  user_internal_id: string;
+  agency_name: string;
+  regulated_provider_name: string;
+  programme_name: string;
+  country_of_onboarding: string;
+  relationship_type:
+    | "NEW_ONBOARDING"
+    | "KYC_REFRESH"
+    | "LIMIT_INCREASE"
+    | "REMEDIATION"
+    | "REACTIVATION";
+  user_type:
+    | "INDIVIDUAL"
+    | "SOLE_TRADER"
+    | "LEGAL_REPRESENTATIVE"
+    | "BENEFICIAL_OWNER";
+  current_status:
+    | "DRAFT"
+    | "DOCUMENTS_SUBMITTED"
+    | "EXTRACTION_IN_PROGRESS"
+    | "EXTRACTION_FAILED"
+    | "PENDING"
+    | "PENDING_REVIEW"
+    | "WAITING_FOR_CUSTOMER"
+    | "ESCALATED"
+    | "SUSPENDED";
+  case_priority: "LOW" | "NORMAL" | "HIGH" | "URGENT";
+  assigned_team: string;
+  assigned_analyst_name?: string | null;
+  assigned_analyst_email?: string | null;
+  legal_first_name: string;
+  legal_last_name: string;
+};
+```
+
+Rules:
+
+- Omit kyc_case_id unless the product owns a stable external identifier.
+- Do not create final states directly.
+- Treat created_at, updated_at, and created_by as server-owned.
+- Treat duplicate kyc_case_id as conflict, not as a fatal application crash.
+
+12. SECTION UPDATE CONTRACT
+
+Request:
+
+PATCH /api/v1/kyc-cases/{case_id}/sections/{section_name}
+
+Body:
+
+```json
+{
+  "payload": {}
+}
+```
+
+Common section names:
+
+service_context
+end_user_identity
+contact_verification
+identity_document_verification
+address_verification
+screening
+risk_assessment
+decision
+user_facing_summary
+restricted_compliance_notes
+
+Rules:
+
+- Send one section at a time.
+- Keep section payloads as JSON objects.
+- Hide restricted sections from customer-facing routes.
+- Do not depend only on frontend visibility for security.
+
+13. REPORT SNAPSHOT CONTRACT
+
+Generate:
+
+POST /api/v1/kyc-cases/{case_id}/reports/end-user-v1
+
+Body:
+
+```json
+{
+  "view": "user_safe",
+  "generated_by": "frontend-webapp"
+}
+```
+
+Allowed views:
+
+user_safe
+provider_export
+compliance
+
+Response fields to preserve:
+
+cache_status
+report_snapshot_id
+generated_at
+input_fingerprint
+snapshot_hash
+view_type
+report
+
+Read latest:
+
+GET /api/v1/kyc-cases/{case_id}/reports/latest?view={view}
+
+Rules:
+
+- Use user_safe for customer-facing screens.
+- Use provider_export for partner handoff.
+- Use compliance only for authorized internal review.
+- Show snapshot metadata in internal operator screens.
+- Do not expose restricted notes or internal scoring details in customer routes.
+
+14. WORKFLOW EVENTS CONTRACT
+
+Request:
+
+GET /api/v1/workflow/events?after_id={after_id}&limit={limit}
+
+Response shape:
+
+```ts
+export type WorkflowEvent = {
+  id: number;
+  timestamp: string;
+  level: "info" | "warning" | "error";
+  stage: string;
+  message: string;
+  metadata: Record<string, unknown>;
+};
+```
+
+Rules:
+
+- Poll while active work is visible.
+- Start with after_id=0.
+- Use next_after_id for the next request.
+- Merge events by id.
+- Slow polling when the tab is hidden.
+- Show warning and error events clearly.
+- Do not treat workflow events as the permanent compliance archive.
+
+15. HUMAN REVIEW CONTRACT
+
+Request:
+
+POST /api/v1/kyc-cases/{case_id}/review-decisions
+
+Allowed decision outcomes:
+
+approved
+rejected
+needs_more_information
+escalated
+
+Frontend rules:
+
+- Show generated recommendation separately from human decision.
+- Require explicit reviewer action.
+- Require rationale before submit.
+- Disable final submit while save/report operations are pending.
+- Treat needs_more_information as a workflow state, not an error.
+
+16. UI IMPLEMENTATION GUIDANCE
+
+Use the target repository's existing design language.
+
+Build practical screens:
+
+- Diagnostics page.
+- Search page.
+- Case list or case detail entry point.
+- Case workspace.
+- Section editor.
+- Evidence panel.
+- Report viewer.
+- Workflow timeline.
+- Review decision panel.
+
+Do not build a generic landing page unless the repository explicitly needs one.
+
+Accessibility requirements:
+
+- Use semantic HTML.
+- Label form fields.
+- Preserve keyboard navigation.
+- Show focus states.
+- Present errors near the relevant field or form.
+- Do not use color alone to communicate risk or status.
+
+17. DATA FETCHING GUIDANCE
+
+Use the repository's existing data layer.
+
+If using TanStack Query:
+
+- Disable blind retries for compliance-changing mutations.
+- Use query keys that include caseId and report view.
+- Invalidate case/report queries after section updates or report generation.
+
+If using a backend-for-frontend:
+
+- Browser signs in through public auth flow.
+- BFF forwards short-lived user token or server-authorized user context.
+- BFF must not leak service credentials to browser.
+
+If using direct SPA calls:
+
+- Ensure the frontend origin is allowed by the API owner.
+- Keep tokens in memory or session storage according to the target app's auth policy.
+- Document the XSS trade-off if persistent storage is used.
+
+18. TESTING AND VERIFICATION
+
+Run the repository's actual commands. Prefer:
+
+pnpm typecheck
+pnpm lint
+pnpm test
+pnpm build
+
+If the repo uses npm, yarn, bun, or another tool, use that instead.
+
+Minimum verification scenarios:
+
+1. Public health endpoint renders reachable state.
+2. Public readiness endpoint renders ready/degraded state.
+3. Protected request without token redirects or shows sign-in state.
+4. Quick screening form validates missing/short name.
+5. Quick screening success renders evidence and limitations.
+6. API validation error maps to form error.
+7. API 401 maps to auth recovery.
+8. API 409 maps to conflict UI.
+9. Case creation success routes to case workspace.
+10. Section save updates UI without losing unsaved form state.
+11. Report generation shows HIT or MISS cache status.
+12. Workflow polling merges events without duplicates.
+13. Review decision requires rationale.
+14. Customer route does not render compliance-only fields.
+
+19. AUTONOMOUS IMPLEMENTATION ORDER
+
+Follow this order:
+
+1. Inspect package manager, framework, router, auth, data-fetching, and UI patterns.
+2. Add environment config helpers.
+3. Add KYC API client.
+4. Add API domain types.
+5. Add diagnostics route.
+6. Add quick screening route.
+7. Add case creation and case workspace.
+8. Add section update support.
+9. Add report generation and latest-report viewer.
+10. Add workflow event monitor.
+11. Add review decision panel.
+12. Add tests.
+13. Run typecheck, lint, test, and build.
+14. Update project docs or README with integration setup.
+15. Report exact files changed and commands run.
+
+20. FORBIDDEN SHORTCUTS
+
+Do not:
+
+- Put private credentials in browser code.
+- Use Personal Access Tokens as production browser API keys.
+- Hardcode private deployment values into reusable source.
+- Treat quick screening as final approval.
+- Collapse recommendation and human decision into one button.
+- Hide API errors behind generic messages when structured details exist.
+- Log regulated payloads to analytics.
+- Expose compliance-only report sections to customers.
+- Add a new UI framework if the app already has one.
+- Change unrelated product surfaces.
+
+21. DONE DEFINITION
+
+The integration is complete when:
+
+- The app can call public diagnostics endpoints.
+- Authenticated API calls attach a bearer token.
+- The API client parses structured errors.
+- Quick screening works.
+- Durable case creation works.
+- Case section updates work.
+- Report snapshot generation and latest-report loading work.
+- Workflow events can be displayed.
+- Human decisions require explicit reviewer action and rationale.
+- Customer-safe views do not expose restricted data.
+- The repository's verification commands pass or blockers are clearly documented.
+
+22. HUMAN HANDOFF SUMMARY TEMPLATE
+
+When finished, report:
+
+- What screens and modules were added.
+- Which API endpoints are wired.
+- How auth is configured.
+- Which environment variables are required.
+- What error states are handled.
+- What tests/checks were run.
+- Any unsupported endpoint or missing operator input.
+- Any security or compliance assumptions.
+
+Do not claim production readiness if auth values, CORS allowlist, role claims, or protected endpoint access were not verified in the target environment.

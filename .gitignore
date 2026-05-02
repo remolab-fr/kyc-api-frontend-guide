@@ -1,0 +1,11 @@
+/book/
+/.DS_Store
+**/.DS_Store
+*.pem
+*.key
+*.p12
+*.pfx
+*.env
+*.env.*
+!.env.example
+node_modules/
