@@ -31,14 +31,8 @@ jobs:
         with:
           mdbook-version: "0.5.2"
 
-      - name: Build
-        run: mdbook build
-
-      - name: Add root LLM manifest to site
-        run: |
-          cp LLM.txt book/LLM.txt
-          cp LLM.txt book/llm.txt
-          touch book/.nojekyll
+      - name: Validate and build
+        run: bash scripts/validate-public-guide.sh
 
       - name: Configure Pages
         uses: actions/configure-pages@v5

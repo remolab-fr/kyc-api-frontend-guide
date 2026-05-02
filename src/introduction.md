@@ -8,8 +8,10 @@ The course is written for implementation. It teaches the browser-safe API
 contract, the screens to build, the product states to handle, and the security
 boundaries a frontend team must preserve.
 
-The structure is deliberately incremental: each module has one job, one visible
-outcome, and a checkpoint before the next module.
+The structure is deliberately incremental: each topic has one job, one visible
+outcome, and a checkpoint before the next topic. You can follow the course from
+the beginning, or you can enter through the page that matches the screen you are
+building today.
 
 ## Who This Is For
 
@@ -20,6 +22,7 @@ outcome, and a checkpoint before the next module.
 
 ## What You Will Learn
 
+- How the frontend-facing API capabilities fit together.
 - How to configure the API boundary without leaking secrets.
 - How to build a typed API client.
 - How to add diagnostics before product screens.
@@ -31,6 +34,15 @@ outcome, and a checkpoint before the next module.
 - How to keep recommendations separate from human decisions.
 - How to adapt the same integration pattern to banks, fintechs, insurers,
   marketplaces, lenders, and other regulated products.
+
+## How The Course Is Organized
+
+- [Course Map](course.md) gives the recommended learning path.
+- [Big Picture](big-picture.md) explains the system model.
+- Workflow pages show complete product paths.
+- Foundation pages define reusable contracts.
+- Task pages build one API-backed feature at a time.
+- Quality pages verify accessibility, audit readiness, tests, and launch safety.
 
 ## Public-Safe Scope
 

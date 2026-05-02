@@ -7,6 +7,52 @@ Primary goal: build a production-quality frontend integration on top of the KYC 
 
 IMPORTANT: This file is intentionally plain text. Treat it as an agent-readable implementation contract, not as a LaTeX document.
 
+COURSE PAGE MAP
+
+The mdBook is topic-based. Do not assume the human reader or coding agent has
+read every page before the current page. Each page should be usable as a direct
+entry point.
+
+Primary orientation pages:
+
+- src/course.md: course map and stable implementation order.
+- src/big-picture.md: product architecture and capability model.
+- src/foundations/integration-boundary.md: browser-safe security boundary.
+- src/foundations/environment-config.md: public runtime configuration.
+- src/foundations/api-client.md: shared TypeScript API client.
+- src/foundations/diagnostics.md: health, readiness, and auth diagnostics.
+- src/foundations/error-states.md: structured API error mapping.
+- src/foundations/data-shapes.md: vocabulary and conceptual data shapes.
+
+Workflow pages:
+
+- src/workflows/read-only-dashboard.md
+- src/workflows/case-intake-form.md
+- src/workflows/reviewer-workspace.md
+- src/workflows/launch-ready-frontend.md
+
+Task pages:
+
+- src/tasks/quick-screening.md
+- src/tasks/create-durable-cases.md
+- src/tasks/case-sections.md
+- src/tasks/report-snapshots.md
+- src/tasks/workflow-events.md
+- src/tasks/human-review-decisions.md
+
+Quality pages:
+
+- src/quality/accessible-product-states.md
+- src/quality/audit-ready-ui.md
+- src/quality/testing-checklist.md
+- src/quality/launch-checklist.md
+
+When implementing a target frontend, start with the page that matches the
+product workflow, then follow its related pages. Preserve the same structure in
+new project documentation when useful: use-this-when, what-you-will-build,
+what-must-already-be-true, API contract, UI states, implementation steps,
+checkpoint, common mistakes, related pages.
+
 1. MISSION
 
 You are an autonomous senior frontend engineering agent.
@@ -604,20 +650,23 @@ Minimum verification scenarios:
 Follow this order:
 
 1. Inspect package manager, framework, router, auth, data-fetching, and UI patterns.
-2. Add environment config helpers.
-3. Add KYC API client.
-4. Add API domain types.
-5. Add diagnostics route.
-6. Add quick screening route.
-7. Add case creation and case workspace.
-8. Add section update support.
-9. Add report generation and latest-report viewer.
-10. Add workflow event monitor.
-11. Add review decision panel.
-12. Add tests.
-13. Run typecheck, lint, test, and build.
-14. Update project docs or README with integration setup.
-15. Report exact files changed and commands run.
+2. Read the relevant workflow page from src/workflows.
+3. Add environment config helpers from src/foundations/environment-config.md.
+4. Add the KYC API client from src/foundations/api-client.md.
+5. Add API domain types using src/foundations/data-shapes.md.
+6. Add diagnostics from src/foundations/diagnostics.md.
+7. Add error handling from src/foundations/error-states.md.
+8. Add quick screening when the workflow requires it.
+9. Add case creation and case workspace when the workflow requires persistence.
+10. Add section update support for editable case areas.
+11. Add report generation and latest-report viewer.
+12. Add workflow event monitor.
+13. Add review decision panel.
+14. Add tests using src/quality/testing-checklist.md.
+15. Run typecheck, lint, test, and build.
+16. Run launch review using src/quality/launch-checklist.md.
+17. Update project docs or README with integration setup.
+18. Report exact files changed and commands run.
 
 At every step, implement the visible product states for that layer:
 

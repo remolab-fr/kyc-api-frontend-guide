@@ -3,7 +3,7 @@ authors = ["Remolab"]
 language = "en"
 src = "src"
 title = "KYC API Frontend Guide"
-description = "A public course for frontend engineers building regulated onboarding, due diligence, and case review applications on top of the KYC API."
+description = "A topic-based public course for frontend engineers building regulated onboarding, due diligence, and case review applications on top of the KYC API."
 
 [output.html]
 git-repository-url = "https://github.com/remolab-fr/kyc-api-frontend-guide"
