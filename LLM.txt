@@ -47,6 +47,12 @@ Implement end to end:
 7. Run formatting, type checks, linting, tests, and build commands.
 8. Report what changed and what validation passed.
 
+Work one stable layer at a time:
+
+configuration -> API client -> diagnostics -> errors -> screening -> cases -> reports -> review
+
+Do not start every screen in parallel. Finish the smallest visible slice, verify it, then continue.
+
 3. SECURITY RULES
 
 The browser must never contain:
@@ -612,6 +618,14 @@ Follow this order:
 13. Run typecheck, lint, test, and build.
 14. Update project docs or README with integration setup.
 15. Report exact files changed and commands run.
+
+At every step, implement the visible product states for that layer:
+
+- Empty state.
+- Loading state.
+- Success state.
+- Validation or auth error state.
+- Retry or support handoff state when applicable.
 
 20. FORBIDDEN SHORTCUTS
 

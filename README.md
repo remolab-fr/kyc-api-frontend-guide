@@ -6,7 +6,7 @@ applications on top of the KYC API.
 
 ## Read The Course
 
-After GitHub Pages is enabled for this repository, the course is published at:
+The course is published at:
 
 https://remolab-fr.github.io/kyc-api-frontend-guide/
 
@@ -16,6 +16,11 @@ Use [`LLM.txt`](./LLM.txt) as the machine-readable implementation contract. It
 contains the endpoint plan, security rules, TypeScript client shape, UI feature
 scope, verification checklist, and done definition for autonomous frontend
 implementation work.
+
+The public site also serves the same contract at:
+
+- `https://remolab-fr.github.io/kyc-api-frontend-guide/LLM.txt`
+- `https://remolab-fr.github.io/kyc-api-frontend-guide/llm.txt`
 
 ## Local Development
 

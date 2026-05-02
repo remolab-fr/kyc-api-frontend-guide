@@ -8,6 +8,9 @@ The course is written for implementation. It teaches the browser-safe API
 contract, the screens to build, the product states to handle, and the security
 boundaries a frontend team must preserve.
 
+The structure is deliberately incremental: each module has one job, one visible
+outcome, and a checkpoint before the next module.
+
 ## Who This Is For
 
 - Frontend engineers integrating a KYC or due diligence API.
@@ -19,6 +22,8 @@ boundaries a frontend team must preserve.
 
 - How to configure the API boundary without leaking secrets.
 - How to build a typed API client.
+- How to add diagnostics before product screens.
+- How to treat API errors as product states.
 - How to render quick screening evidence.
 - How to create and update durable case workspaces.
 - How to generate report snapshots.

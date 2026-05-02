@@ -1,76 +1,75 @@
 # Build Regulated Frontend Apps With The KYC API
 
-This guide is for frontend teams building customer onboarding, due diligence,
-case review, or compliance operations products on top of the KYC API.
+This course teaches frontend developers how to build real regulated product
+workflows on top of the KYC API.
 
-It is intentionally written at the public integration layer. You do not need to
-know how the platform is implemented internally. You need to know the contract:
-how to authenticate a user, call the API safely, render evidence, guide a
-reviewer through the right workflow, and adapt the same building blocks to your
-own regulated product.
+It is written for implementation, not theory. You will build the integration
+the way a production team should build it: start with configuration and
+diagnostics, add a small typed API client, handle errors as product states, then
+compose screening, case management, reports, workflow visibility, and human
+review into reusable screens.
 
-If you build for a bank, fintech, lender, insurer, marketplace, digital asset
-service, payments provider, or regulated B2B platform, this tutorial gives you a
-clean starting point.
+The course stays at the public API boundary. You do not need to know how the
+platform is implemented internally. You need to know the contract your frontend
+can rely on.
 
-## The Product You Are Building
+## Learning Outcomes
 
-The API gives your frontend five durable product primitives:
+After completing this course, you should be able to:
 
-| Primitive | What it lets you build |
+1. Configure a frontend application for the KYC API without leaking secrets.
+2. Build a small TypeScript API client that attaches user tokens and parses
+   structured errors.
+3. Add an API diagnostics screen that separates connectivity, readiness, and
+   authentication problems.
+4. Build a quick screening experience that presents evidence without pretending
+   to make a final decision.
+5. Create a durable case workspace for regulated review.
+6. Save case sections one at a time.
+7. Generate and display report snapshots with the correct view for the audience.
+8. Poll workflow events while work is active.
+9. Keep generated recommendations visibly separate from human decisions.
+10. Adapt the same integration pattern to onboarding, refresh, lending,
+    insurance, marketplace, and support workflows.
+
+## The Mental Model
+
+Think of the KYC API as six frontend-facing capabilities.
+
+| Capability | Frontend responsibility | API responsibility |
+|---|---|---|
+| Access | Sign in the user and send a short-lived bearer token. | Validate the token and authorize protected requests. |
+| Diagnostics | Show whether the API is reachable and ready. | Expose public health and readiness endpoints. |
+| Screening evidence | Collect search input and render evidence clearly. | Return screening status, evidence status, limitations, and next steps. |
+| Case workspace | Let operators create and update a review file. | Persist durable case records and section updates. |
+| Report snapshots | Request the correct report view and display it safely. | Generate immutable report artifacts with snapshot metadata. |
+| Human review | Require reviewer action and rationale. | Record accountable review decisions. |
+
+The frontend orchestrates the experience. The API owns the regulated workflow
+contract.
+
+## Vocabulary Used In This Course
+
+Use these terms consistently in your code, UI, and documentation.
+
+| Term | Meaning |
 |---|---|
-| Authenticated API access | A browser or app backend can call protected KYC endpoints with a short-lived user token. |
-| Screening evidence | Your UI can show screening status, evidence status, limitations, and next steps. |
-| Case workspace | Your product can create and update a durable review file. |
-| Report snapshot | Your UI can generate and display stable report views for customers, partners, or internal operators. |
-| Workflow visibility | Your app can show progress, warnings, and errors while long-running work is active. |
+| API client | The small frontend module that wraps `fetch`, attaches tokens, and parses errors. |
+| Diagnostics | Public health/readiness checks plus authenticated access checks. |
+| Quick screening | A lightweight evidence search. It is not a final approval. |
+| Case | A durable review file for one customer, seller, borrower, policyholder, or subject. |
+| Section | One named part of a case file, saved independently. |
+| Report snapshot | A generated report artifact with ID, hash, view, timestamp, and payload. |
+| Workflow event | A progress event for active work. It is not the permanent compliance archive. |
+| Recommendation | Generated or assisted guidance shown to a reviewer. |
+| Decision | The accountable human action submitted by an authorized reviewer. |
 
-The important rule is simple: the frontend orchestrates the user experience; the
-API owns the regulated workflow contract.
+The API uses some technical parameter names, such as `include_web_search`. Your
+UI can label the same control "evidence search" if that is clearer for users.
 
-## What You Will Build
+## Prerequisites
 
-By the end of this tutorial, you will have a reusable frontend integration
-pattern for:
-
-1. Checking whether the API is reachable.
-2. Calling protected endpoints with the current user's access token.
-3. Handling validation, authentication, conflict, and service errors.
-4. Running a quick screening search.
-5. Creating a durable case.
-6. Saving case sections.
-7. Generating and reading report snapshots.
-8. Polling workflow events.
-9. Separating automated recommendations from human decisions.
-10. Adapting the same API flow to different regulated industries.
-
-## Public Integration Boundary
-
-A strong API integration starts by drawing the right boundary.
-
-Your frontend should know:
-
-- Which base URL to call.
-- How to get a user access token.
-- Which endpoint creates, reads, or updates a workflow resource.
-- Which response fields are safe to render.
-- Which errors are recoverable by the user and which require support.
-
-Your frontend should not know:
-
-- Internal hosting or infrastructure choices.
-- Internal storage design.
-- Internal model, scoring, or routing implementation.
-- Private service credentials.
-- Operator-only tools.
-- Secret-bearing smoke-test scripts.
-
-That separation protects your users, your developers, and your compliance
-process. It also makes the integration portable across regulated products.
-
-## Values You Need From The API Owner
-
-Before writing application code, ask the API owner for these values:
+Before implementation, get these values from the API owner:
 
 ```text
 KYC API base URL
@@ -83,7 +82,8 @@ Allowed frontend origin
 Support contact or escalation path
 ```
 
-Keep them in environment variables:
+Use the target application's environment convention. In a Vite application, the
+public variables usually look like this:
 
 ```text
 VITE_KYC_API_BASE_URL=https://api.example.com
@@ -94,19 +94,83 @@ VITE_AUTH_POST_LOGOUT_REDIRECT_URI=http://localhost:5173/
 VITE_AUTH_AUDIENCE_SCOPE=api-audience-scope
 ```
 
-The browser must never receive private service credentials, private keys,
-backend secrets, raw database URLs, or long-lived bearer credentials. If a value
-cannot be safely pasted into a public browser bundle, it does not belong in the
-frontend.
+Never ship private credentials to the browser. The frontend may contain public
+configuration. It must not contain service credentials, private keys, backend
+secrets, database URLs, provider credentials, or long-lived bearer tokens.
 
-## Step 1: Create A Small API Client
+## Course Path
 
-Start with a small client that does four jobs well:
+Build the integration in this order:
 
-- Attach the current user's access token when available.
-- Send JSON requests consistently.
-- Parse the shared error envelope.
-- Return typed responses to the rest of your app.
+1. Draw the public integration boundary.
+2. Create a typed API client.
+3. Add diagnostics.
+4. Treat API errors as product states.
+5. Build quick screening.
+6. Create durable cases.
+7. Save case sections.
+8. Generate report snapshots.
+9. Poll workflow events.
+10. Submit human review decisions.
+11. Adapt the flow to your product.
+12. Run the launch checklist.
+
+Each module has a practical checkpoint. Do not skip the checkpoints; they catch
+integration mistakes before they become product bugs.
+
+## How To Use This Course
+
+Use the course as a sequence of small implementation loops:
+
+1. Read the goal of the module.
+2. Copy or adapt the code shape.
+3. Build the smallest visible screen or client method.
+4. Run the checkpoint.
+5. Stop or continue to the next module.
+
+Do not try to build every screen at once. The fastest path is one stable layer
+at a time:
+
+```text
+configuration -> API client -> diagnostics -> errors -> screening -> cases -> reports -> review
+```
+
+Each module has one main job. If you lose context, return to the module title,
+the checkpoint, and the final teaching pattern at the end of the course.
+
+## Module 1: Draw The Integration Boundary
+
+A strong frontend integration starts by deciding what the frontend should know.
+
+Your frontend should know:
+
+- Which base URL to call.
+- How to get the current user's access token.
+- Which endpoints create, read, or update workflow resources.
+- Which response fields are safe to render.
+- Which errors are recoverable by the user.
+- Which errors require support handoff.
+
+Your frontend should not know:
+
+- Internal hosting choices.
+- Internal storage design.
+- Internal model, scoring, or routing implementation.
+- Private service credentials.
+- Operator-only tools.
+- Secret-bearing smoke-test scripts.
+
+Checkpoint:
+
+- You can explain which values are public configuration and which values must
+  stay server-side.
+- Your environment files do not contain private credentials.
+- Your UI language does not promise that quick screening equals final approval.
+
+## Module 2: Create The API Client
+
+Start with one small API client. Keep it independent from UI components so every
+screen uses the same request, auth, and error behavior.
 
 ```ts
 export type KycApiClientOptions = {
@@ -158,7 +222,7 @@ export class KycApiError extends Error {
 }
 ```
 
-Now wrap `fetch`:
+Wrap `fetch` once:
 
 ```ts
 export class KycApiClient {
@@ -209,7 +273,7 @@ export class KycApiClient {
 }
 ```
 
-Create one client instance at the app boundary:
+Create one instance at the app boundary:
 
 ```ts
 export const kycApi = new KycApiClient({
@@ -218,15 +282,22 @@ export const kycApi = new KycApiClient({
 });
 ```
 
-`getAccessToken` should come from your approved browser sign-in flow. For a
-public frontend, that usually means authorization code with PKCE. The important
-part is that your API client receives only the current user's short-lived access
-token.
+Checkpoint:
 
-## Step 2: Make API Health Visible
+- All API calls use the same client.
+- Protected requests attach `Authorization: Bearer <access_token>`.
+- Non-2xx responses throw `KycApiError`.
+- `request_id` is available for support handoff.
 
-Good frontend integrations make connectivity visible early. Add a diagnostics
-screen before building complex product flows.
+## Module 3: Add Diagnostics First
+
+Add a diagnostics screen before building product screens. It should answer four
+questions:
+
+- Can the browser reach the API?
+- Is the API ready to handle work?
+- Is the user signed in?
+- Can a protected endpoint be called with the current token?
 
 ```ts
 export type HealthResponse = {
@@ -248,20 +319,26 @@ export async function loadApiDiagnostics(client: KycApiClient) {
 }
 ```
 
-Build the UI so a developer can answer four questions quickly:
+Suggested UI states:
 
-- Can the browser reach the API?
-- Is the API ready to handle work?
-- Is the user signed in?
-- Can a protected endpoint be called with the current token?
+| State | Meaning | User action |
+|---|---|---|
+| Reachable | Browser can call public API endpoints. | Continue setup. |
+| Not reachable | Network, base URL, CORS, or DNS may be wrong. | Check API base URL and frontend origin. |
+| Ready | API reports it can handle work. | Continue product flow. |
+| Degraded | API is reachable but not fully ready. | Show diagnostics and retry later. |
+| Authenticated | User token is present and accepted. | Enable protected flows. |
+| Unauthorized | Token is missing, expired, or invalid. | Sign in again. |
 
-This one screen saves hours during integration because it separates network,
-configuration, authentication, and product-flow issues.
+Checkpoint:
 
-## Step 3: Treat Errors As Product States
+- A developer can diagnose base URL, readiness, and auth problems without
+  opening browser devtools.
 
-Regulated applications should not collapse every failure into "Something went
-wrong." The API returns structured errors so the frontend can respond clearly.
+## Module 4: Treat Errors As Product States
+
+Regulated applications should not collapse every API failure into "Something
+went wrong." Structured errors are part of the product contract.
 
 ```ts
 export function isValidationError(error: unknown): error is KycApiError {
@@ -281,23 +358,27 @@ export function isRetryableServiceError(error: unknown): error is KycApiError {
 }
 ```
 
-Use this behavior in your UI:
+Use the status to drive clear UI behavior:
 
-| Status | Frontend response |
+| Status | UI behavior |
 |---:|---|
-| 400 | Show a field or form error. Use `details.field` when present. |
+| 400 | Show field or form validation. Use `details.field` when present. |
 | 401 | Refresh login or redirect to sign in. |
-| 404 | Show a missing resource state and route back to a safe page. |
+| 404 | Show missing resource state and route back to a safe page. |
 | 409 | Offer to load the existing case or create a new external identifier. |
 | 503 | Show degraded service, retry later, and include `request_id` in support details. |
 
-Always include `request_id` in support handoffs. Never include access tokens,
-identity documents, private keys, or raw regulated payloads in client logs.
+Checkpoint:
 
-## Step 4: Build Quick Screening
+- Field errors appear near the relevant form input.
+- Authentication errors do not look like data-entry errors.
+- Conflict errors give the operator a recoverable path.
+- Support details include `request_id`.
 
-Quick screening is the lightweight entry point. Use it when an operator needs a
-fast evidence pass before creating a full case.
+## Module 5: Build Quick Screening
+
+Quick screening is the lightweight evidence flow. Use it when an operator needs
+a first pass before opening a durable case.
 
 ```ts
 export type KycSearchParams = {
@@ -365,19 +446,22 @@ export async function searchKyc(client: KycApiClient, params: KycSearchParams) {
 }
 ```
 
-Coach the user through the result:
+Teach the UI to present evidence, not a verdict:
 
-- Show the subject and generation time.
-- Show the overall status and risk level.
+- Show the subject and generated timestamp.
+- Show overall status and risk level.
 - Show screening status separately from evidence-search status.
 - Show limitations near the summary.
 - Show query-level failures when evidence is partial.
-- Never turn quick screening into a final approval button.
+- Never turn quick screening into a final approval action.
 
-The strongest UX pattern is an evidence card, not a binary verdict. Regulated
-review depends on context, policy, and human accountability.
+Checkpoint:
 
-## Step 5: Create A Durable Case
+- A user can understand what was checked, what was degraded, and what should
+  happen next.
+- No quick-screening result is labeled as final approval.
+
+## Module 6: Create Durable Cases
 
 Create a case when the workflow needs persistence: submitted identity details,
 section updates, reviewer activity, report snapshots, or future refreshes.
@@ -439,19 +523,25 @@ export async function createKycCase(
 }
 ```
 
-Design the form with these rules:
+Form rules:
 
-- Let the API generate `kyc_case_id` unless your product already has a stable
-  external case ID.
+- Let the API generate `kyc_case_id` unless your product owns a stable external
+  case ID.
 - Do not let users create final states directly.
 - Treat duplicate external IDs as recoverable conflicts.
 - Treat server-owned response fields as read-only.
 - Keep personal data out of analytics and frontend debug logs.
 
-## Step 6: Save Case Sections
+Checkpoint:
 
-Sections let the frontend update one part of the case file at a time. That keeps
-forms smaller, autosave easier, and review screens easier to reason about.
+- Creating a case routes the user into a case workspace.
+- Server-owned fields are displayed but not edited.
+- A duplicate external ID shows a conflict path, not a crash.
+
+## Module 7: Save Case Sections
+
+Sections let the frontend update one part of the case file at a time. They make
+forms smaller, autosave safer, and review screens easier to reason about.
 
 ```ts
 export type KycSectionName =
@@ -492,13 +582,17 @@ Use section names as product modules:
 | `user_facing_summary` | Customer-safe explanation. |
 | `restricted_compliance_notes` | Internal-only compliance notes. |
 
-The frontend may hide or show sections by role, but backend authorization should
-remain the enforcement point.
+Checkpoint:
 
-## Step 7: Generate Report Snapshots
+- A section save updates only that part of the case.
+- Restricted sections are hidden from customer-facing routes.
+- Frontend role gating improves usability, while backend authorization remains
+  the enforcement point.
 
-Reports are generated as snapshots. A snapshot is a stable artifact: it has an
-identifier, a view type, a hash, and the report payload returned to your UI.
+## Module 8: Generate Report Snapshots
+
+Reports are generated as snapshots. A snapshot is a stable artifact with an ID,
+view type, hash, timestamp, and report payload.
 
 ```ts
 export type ReportView = "compliance" | "provider_export" | "user_safe";
@@ -550,13 +644,17 @@ Show snapshot metadata in operator-facing screens:
 - `generated_at`
 - `view_type`
 
-Do not expose restricted notes, internal scoring details, or control logic in
-customer-facing experiences.
+Checkpoint:
 
-## Step 8: Show Workflow Progress
+- Customer routes use `user_safe`.
+- Internal review routes can show snapshot metadata.
+- Restricted notes, internal scoring details, and control logic do not appear
+  in customer-facing experiences.
 
-Some operations take time. Use workflow events to keep users oriented while work
-is active.
+## Module 9: Show Workflow Progress
+
+Some operations take time. Workflow events keep users oriented while work is
+active.
 
 ```ts
 export type WorkflowEvent = {
@@ -586,13 +684,16 @@ Polling guidance:
 - Slow polling when the browser tab is hidden.
 - Show warnings and errors as first-class UI states.
 
-Workflow events are a progress feed. They are not the permanent record of the
-case. Use the case, report, and audit surfaces for durable review evidence.
+Checkpoint:
 
-## Step 9: Keep Recommendations And Decisions Separate
+- Event polling does not create duplicates.
+- Warning and error events are visible.
+- The UI treats workflow events as progress, not permanent compliance history.
+
+## Module 10: Submit Human Review Decisions
 
 Regulated products must distinguish generated recommendations from accountable
-human decisions. Your UI should make that separation obvious.
+human decisions.
 
 ```ts
 export type ReviewDecisionOutcome =
@@ -619,7 +720,7 @@ export async function submitReviewDecision(
 }
 ```
 
-A good review screen has three separate zones:
+A good review screen has three zones:
 
 | Zone | Purpose |
 |---|---|
@@ -627,16 +728,19 @@ A good review screen has three separate zones:
 | Recommendation | Suggested outcome, rationale, and limitations. |
 | Decision | The human action, rationale, and final submission control. |
 
-Do not let an automated recommendation silently become the decision. Require a
-clear reviewer action and rationale.
+Checkpoint:
 
-## Step 10: Adapt The API To Your Industry
+- Recommendation and decision are visually separate.
+- The final decision requires a reviewer action.
+- The decision form requires rationale.
+- `needs_more_information` is treated as workflow state, not a technical error.
 
-The same API contract supports different regulated products. The vocabulary
-changes, but the integration flow stays stable:
+## Module 11: Adapt The Flow To Your Product
+
+The vocabulary changes by industry, but the integration flow stays stable:
 
 ```text
-sign in -> create or load case -> save sections -> review evidence -> generate report -> submit decision
+configure -> authenticate -> call -> validate -> render -> preserve request_id -> guide the next regulated action
 ```
 
 | Product | How to shape the workflow |
@@ -648,7 +752,7 @@ sign in -> create or load case -> save sections -> review evidence -> generate r
 | Periodic customer refresh | Load or create a refresh case, update changed sections, regenerate a report snapshot, and preserve prior evidence. |
 | Customer support portal | Show only the customer-safe report view and hide internal evidence, scoring, and restricted notes. |
 
-Build your app around reusable screens:
+Reusable screens:
 
 - Diagnostics
 - Search
@@ -659,10 +763,12 @@ Build your app around reusable screens:
 - Workflow timeline
 - Review decision panel
 
-Those screens can be recomposed into many regulated products without changing
-the core API client.
+Checkpoint:
 
-## Launch Checklist
+- Your product uses domain-specific labels, but the underlying API flow remains
+  consistent.
+
+## Module 12: Launch Checklist
 
 Before moving from prototype to production, confirm:
 
@@ -677,14 +783,23 @@ Before moving from prototype to production, confirm:
 - Internal-only sections are hidden from customer-facing routes.
 - Human review actions require explicit rationale.
 - Personal and regulated data are excluded from analytics and client logs.
+- The application has tests for diagnostics, auth failures, validation errors,
+  conflict errors, quick screening, case creation, report generation, workflow
+  polling, and review decision submission.
 
-## The Core Pattern
+## Final Teaching Pattern
 
-When in doubt, return to this integration shape:
+Use this sequence when coaching a frontend team:
 
-```text
-configure -> authenticate -> call -> validate -> render -> preserve request_id -> guide the next regulated action
-```
+1. Prove the API is reachable.
+2. Prove authentication works.
+3. Prove structured errors are useful.
+4. Render evidence without making a decision.
+5. Persist the case.
+6. Save one section at a time.
+7. Generate the right report view.
+8. Show progress while work is active.
+9. Require an accountable human decision.
+10. Verify the customer-facing view hides restricted data.
 
-That is the frontend discipline that keeps API integrations maintainable across
-teams, jurisdictions, and regulated products.
+That sequence turns an API integration into a reliable product workflow.
