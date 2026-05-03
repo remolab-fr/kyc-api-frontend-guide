@@ -59,6 +59,7 @@ export function isRetryableServiceError(error: unknown): error is KycApiError {
 | 401 | Refresh login or redirect to sign in. |
 | 404 | Show missing resource state and route back to a safe page. |
 | 409 | Offer to load the existing case or create a new external identifier. |
+| 429 | Show overloaded/retry-later state and use `Retry-After` or exponential backoff. |
 | 503 | Show degraded service, retry later, and include `request_id` in support details. |
 
 ## Implementation Steps
@@ -75,6 +76,7 @@ export function isRetryableServiceError(error: unknown): error is KycApiError {
 - Authentication errors do not look like validation errors.
 - Conflict errors give the operator a recoverable path.
 - Support details include `request_id` when the API provides it.
+- Retryable overload errors are handled without repeatedly hammering the API.
 
 ## Common Mistakes
 

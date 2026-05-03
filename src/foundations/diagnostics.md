@@ -30,11 +30,25 @@ Suggested response types:
 ```ts
 export type HealthResponse = {
   status: string;
+  release?: string;
+  runtime?: {
+    git_sha?: string;
+    image_ref?: string;
+    fly_app_name?: string;
+    fly_process_group?: string;
+    fly_region?: string;
+  };
 };
 
 export type ReadinessResponse = {
   status: string;
-  checks?: Record<string, unknown>;
+  release?: string;
+  runtime?: HealthResponse["runtime"];
+  checks?: Array<{
+    name: string;
+    ok: boolean;
+    detail?: string;
+  }>;
 };
 ```
 
@@ -65,6 +79,10 @@ building.
 | Authenticated | User token is present and accepted. | Enable protected flows. |
 | Unauthorized | Token is missing, expired, or invalid. | Sign in again. |
 
+Developer diagnostics should show the API `release`, deployment/runtime
+metadata, and any failed readiness check names. Do not show `/metrics` in
+customer-facing UI; it is an operator/debug endpoint.
+
 ## Implementation Steps
 
 1. Add a diagnostics route or admin-only panel.
@@ -77,6 +95,8 @@ building.
 
 - A developer can diagnose base URL, readiness, and auth problems without
   opening browser devtools.
+- A developer can compare the frontend environment against the backend release
+  currently serving the API.
 - The diagnostics page does not expose private credentials or regulated data.
 
 ## Common Mistakes

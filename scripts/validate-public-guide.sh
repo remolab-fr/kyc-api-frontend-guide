@@ -3,8 +3,14 @@ set -euo pipefail
 
 content_targets=("README.md" "LLM.txt" "src")
 repo_targets=("README.md" "LLM.txt" "book.toml" ".github/workflows/pages.yml" "scripts" "src")
+build_timestamp="${PUBLIC_GUIDE_BUILD_TIMESTAMP:-$(date -u '+%Y-%m-%dT%H:%M:%SZ')}"
+build_commit="${PUBLIC_GUIDE_BUILD_COMMIT:-$(git rev-parse --short HEAD 2>/dev/null || echo unknown)}"
 
 mdbook build
+python3 scripts/stamp-build-metadata.py \
+  --book-dir book \
+  --timestamp "$build_timestamp" \
+  --commit "$build_commit"
 cp LLM.txt book/LLM.txt
 cp LLM.txt book/llm.txt
 touch book/.nojekyll

@@ -4,6 +4,11 @@ This public course helps frontend teams build regulated onboarding, due
 diligence, case review, customer refresh, and compliance operations products on
 top of the KYC API.
 
+<p class="guide-build-metadata">
+Last published: <strong data-guide-build-timestamp>__GUIDE_BUILD_TIMESTAMP__</strong>
+from commit <code data-guide-build-commit>__GUIDE_BUILD_COMMIT__</code>.
+</p>
+
 The course is written for implementation. It teaches the browser-safe API
 contract, the screens to build, the product states to handle, and the security
 boundaries a frontend team must preserve.

@@ -32,6 +32,8 @@ jobs:
           mdbook-version: "0.5.2"
 
       - name: Validate and build
+        env:
+          PUBLIC_GUIDE_BUILD_COMMIT: ${{ github.sha }}
         run: bash scripts/validate-public-guide.sh
 
       - name: Configure Pages

@@ -86,6 +86,8 @@ Decision form states:
 4. Require rationale before submit.
 5. Disable final submit while save or report operations are pending.
 6. Treat `needs_more_information` as workflow state, not a technical error.
+7. After submitting `needs_more_information`, update the case UI from the API
+   response and expect `resulting_status: "WAITING_FOR_CUSTOMER"`.
 
 ## Checkpoint
 
@@ -93,6 +95,8 @@ Decision form states:
 - The final decision requires a reviewer action.
 - The decision form requires rationale.
 - `needs_more_information` is treated as workflow state, not a technical error.
+- Frontend state watches the returned case status instead of polling for a
+  separate report-generation job state.
 
 ## Common Mistakes
 

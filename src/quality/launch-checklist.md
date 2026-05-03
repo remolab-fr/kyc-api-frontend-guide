@@ -26,10 +26,15 @@ Confirm:
 - No private service credential is shipped to the browser.
 - Protected requests send `Authorization: Bearer <access_token>`.
 - Errors display useful user states and preserve `request_id` for support.
+- Developer diagnostics show backend `release` and failed readiness checks.
+- Request and response types are generated from, or manually reviewed against,
+  the checked OpenAPI contract.
 - Quick screening is not presented as final approval.
 - Customer screens use customer-safe report views.
 - Internal-only sections are hidden from customer-facing routes.
 - Human review actions require explicit rationale.
+- Human follow-up uses `needs_more_information`; the case workspace should then
+  watch `WAITING_FOR_CUSTOMER` as the resulting case status.
 - Personal and regulated data are excluded from analytics and client logs.
 - The application has tests for diagnostics, auth failures, validation errors,
   conflict errors, quick screening, case creation, report generation, workflow
